@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authorization.AuthorizationManagerFactories;
 import org.springframework.security.authorization.AuthorizationManagerFactory;
+import org.springframework.security.authorization.DefaultAuthorizationManagerFactory;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authorization.EnableMultiFactorAuthentication;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,8 +23,9 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
+    SecurityFilterChain filterChain(HttpSecurity http, AuthorizationManagerFactory<Object> globelMFA) throws Exception {
+        DefaultAuthorizationManagerFactory<Object> userMFA = new DefaultAuthorizationManagerFactory<Object>();
+    	http
                 .formLogin(login -> login
                         .defaultSuccessUrl("/", true)
                         .permitAll())
@@ -35,7 +37,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/", "/public").permitAll()
                         .requestMatchers("/ott/sent", "/login/ott").permitAll()
+                        .requestMatchers("/user/**").access(userMFA.authenticated())
                         .requestMatchers("/user/**").hasRole("USER")
+                        .requestMatchers("/admin/**").access(globelMFA.authenticated())
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 );
@@ -55,8 +59,8 @@ public class SecurityConfig {
     @Bean
     AuthorizationManagerFactory<Object> authz() {
     	return AuthorizationManagerFactories.multiFactor()
-    		.requireFactor(b -> b.passwordAuthority()) //.validDuration(Duration.ofMinutes(5)))
-    		.requireFactor(b -> b.ottAuthority()) //.validDuration(Duration.ofMinutes(5)))
+    		.requireFactor(b -> b.passwordAuthority().validDuration(Duration.ofMinutes(5)))
+    		.requireFactor(b -> b.ottAuthority().validDuration(Duration.ofMinutes(5)))
     		.build();
     }
     
