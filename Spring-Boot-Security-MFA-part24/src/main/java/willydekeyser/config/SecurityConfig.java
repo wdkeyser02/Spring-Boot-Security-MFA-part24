@@ -1,13 +1,16 @@
 package willydekeyser.config;
 
+import java.time.Duration;
+
 import javax.sql.DataSource;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authorization.AuthorizationManagerFactories;
+import org.springframework.security.authorization.AuthorizationManagerFactory;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authorization.EnableMultiFactorAuthentication;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.authority.FactorGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,10 +18,7 @@ import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
-@EnableMultiFactorAuthentication(authorities = {
-		FactorGrantedAuthority.PASSWORD_AUTHORITY,
-		FactorGrantedAuthority.OTT_AUTHORITY
-})
+@EnableMultiFactorAuthentication(authorities = {})
 public class SecurityConfig {
 
     @Bean
@@ -52,14 +52,12 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
     
-    //@Bean
-    //AuthorizationManagerFactory<Object> authz() {
-    //	return AuthorizationManagerFactories.multiFactor()
-    //		.requireFactors(
-    //			FactorGrantedAuthority.PASSWORD_AUTHORITY,
-    //			FactorGrantedAuthority.OTT_AUTHORITY
-    //		)
-    //		.build();
-    //}
+    @Bean
+    AuthorizationManagerFactory<Object> authz() {
+    	return AuthorizationManagerFactories.multiFactor()
+    		.requireFactor(b -> b.passwordAuthority()) //.validDuration(Duration.ofMinutes(5)))
+    		.requireFactor(b -> b.ottAuthority()) //.validDuration(Duration.ofMinutes(5)))
+    		.build();
+    }
     
 }
